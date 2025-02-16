@@ -74,8 +74,4 @@ def load_service_account():
         st.error(f"Error reading serviceAccountKey.json: {str(io_err)}")
         return None
 
-# Initialize OpenAI client
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-if not OPENAI_API_KEY:
-    st.error("OpenAI API key not found in environment variables. Please add it to your .env file.")
-    st.stop()
+
