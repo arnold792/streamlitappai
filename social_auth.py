@@ -3,17 +3,26 @@ import requests
 import json
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
-from firebase_admin import auth
+from firebase_admin import auth, credentials, initialize_app
 
 class SocialAuth:
     def __init__(self):
-        """Initialize Google Client ID from Streamlit secrets"""
+        """Initialize Google Client ID and Firebase Admin"""
         try:
             self.google_client_id = st.secrets["google"]["GOOGLE_CLIENT_ID"]
             self.google_client_secret = st.secrets["google"]["GOOGLE_CLIENT_SECRET"]
             self.google_redirect_uri = st.secrets["google"]["GOOGLE_REDIRECT_URI"]
+
+            # Initialize Firebase Admin SDK only once
+            if not hasattr(auth, "_app"):
+                cred = credentials.Certificate(st.secrets["firebase"]["CREDENTIALS_PATH"])
+                initialize_app(cred)
+
         except KeyError as e:
             st.error(f"Missing secret: {e}. Check your secrets.toml file.")
+            raise
+        except Exception as e:
+            st.error(f"Error initializing Firebase: {str(e)}")
             raise
 
     def verify_google_token(self, token):
@@ -59,6 +68,9 @@ class SocialAuth:
     def handle_google_login(self, auth_code):
         """Exchange auth code for tokens and authenticate the user"""
         try:
+            if not auth_code:
+                raise ValueError("Invalid authorization code.")
+
             token_endpoint = "https://oauth2.googleapis.com/token"
             data = {
                 "code": auth_code,
